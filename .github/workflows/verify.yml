@@ -25,10 +25,26 @@ jobs:
 
       - run: npm ci
 
+      - name: Pre-flight checks
+        env:
+          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+        run: |
+          if [ -z "$ETHERSCAN_API_KEY" ]; then
+            echo "::error::ETHERSCAN_API_KEY secret is MISSING or empty. Add it in Settings > Secrets and variables > Actions (exact name: ETHERSCAN_API_KEY), then re-run."
+            exit 1
+          fi
+          echo "Secret present (length: ${#ETHERSCAN_API_KEY})."
+          echo "--- 1) API key validity test ---"
+          curl -s "https://api.etherscan.io/v2/api?chainid=11155111&module=proxy&action=eth_blockNumber&apikey=$ETHERSCAN_API_KEY"
+          echo ""
+          echo "--- 2) Current verification status of target contract ---"
+          curl -s "https://api.etherscan.io/v2/api?chainid=11155111&module=contract&action=getsourcecode&address=${{ inputs.address }}&apikey=$ETHERSCAN_API_KEY" \
+            | python3 -c "import json,sys; d=json.load(sys.stdin); r=d.get('result'); r=r[0] if isinstance(r,list) else r; print('API status:', d.get('status'), d.get('message')); print('ContractName:', r.get('ContractName') if isinstance(r,dict) else r); print('SourceCode length:', len(r.get('SourceCode','')) if isinstance(r,dict) else 'n/a')"
+
       - name: Verify on Etherscan (Sepolia)
         env:
           ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
         run: |
-          npx hardhat verify --network sepolia \
+          npx hardhat verify --network sepolia --show-stack-traces \
             "${{ inputs.address }}" \
             "${{ inputs.fee_recipient }}"
