@@ -5,3 +5,4 @@ artifacts/
 coverage/
 coverage.json
 typechain-types/
+slither_raw.txt
