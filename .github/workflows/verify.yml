@@ -1,0 +1,34 @@
+name: Verify contract on Etherscan
+
+on:
+  workflow_dispatch:
+    inputs:
+      address:
+        description: "Deployed contract address"
+        required: true
+        default: "0x306d64A7F18A0886a5B935931febDAB23D430480"
+      fee_recipient:
+        description: "Constructor argument (platform fee recipient)"
+        required: true
+        default: "0x429069184CC214B8B255F74327807660bccADe99"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Verify on Etherscan (Sepolia)
+        env:
+          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+        run: |
+          npx hardhat verify --network sepolia \
+            "${{ inputs.address }}" \
+            "${{ inputs.fee_recipient }}"
