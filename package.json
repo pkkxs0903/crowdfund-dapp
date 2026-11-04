@@ -8,6 +8,8 @@
     "test": "hardhat test",
     "deploy:sepolia": "hardhat run scripts/deploy.js --network sepolia",
     "deploy:local": "hardhat run scripts/deploy.js --network hardhat",
+    "demo": "node scripts/demo.js",
+    "demo:local": "hardhat run scripts/local-demo.js",
     "slither": "slither . --config-file slither.config.json"
   },
   "devDependencies": {

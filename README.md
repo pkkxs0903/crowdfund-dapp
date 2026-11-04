@@ -24,10 +24,14 @@ crowdfund-dapp/
 ├── test/
 │   └── CrowdfundingPlatform.test.js # 37 tests in 4 groups
 ├── scripts/
-│   └── deploy.js                    # deploy + Etherscan verification
+│   ├── deploy.js                    # deploy + Etherscan verification
+│   ├── demo.js                      # drive the deployed contract without a wallet
+│   └── local-demo.js                # full lifecycle incl. settlement, via time travel
 ├── docs/
-│   ├── fig1-architecture.png
-│   └── fig2-flow.png
+│   ├── fig1-architecture.png/.jpg
+│   ├── fig2-flow.png/.jpg
+│   ├── make_figures.py
+│   └── slither-output.txt
 ├── hardhat.config.js
 ├── slither.config.json
 ├── .env.example
@@ -77,6 +81,40 @@ npx hardhat verify --network sepolia <CONTRACT_ADDRESS> <FEE_RECIPIENT>
 | Deployment tx | `0x__________________________________________` |
 
 > Replace the three placeholders above after running `npm run deploy:sepolia`.
+
+### 3.4 Exercising the contract (no browser wallet required)
+
+Deployment only needs a private key, and every function can be called from a
+script, so MetaMask is optional for testing the deployed instance:
+
+```bash
+# create a campaign and invest into it on Sepolia (0.1 ETH target by default)
+node scripts/demo.js <CONTRACT_ADDRESS> 0.1
+```
+
+The script prints the Etherscan link of every transaction it sends, plus the
+project state read back from the contract.
+
+The settlement and refund branches cannot be shown on a public testnet because
+`CAMPAIGN_DURATION` is a 30-day constant. They are demonstrated on an
+in-process chain instead, with `evm_increaseTime` to jump over the window:
+
+```bash
+npx hardhat run scripts/local-demo.js
+```
+
+Expected tail of that output:
+
+```
+creator got   : 1.078 ETH  (98 %, event)
+platformPool  : 0.022 ETH
+platform got  : 0.0219... ETH  (net of gas)
+investor back : 0.5 ETH  (100 % of principal)
+```
+
+All numbers are read from contract storage after each call; nothing is
+hard-coded.
+
 
 ## 4. How the contract works
 
