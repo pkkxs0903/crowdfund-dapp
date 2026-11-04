@@ -38,6 +38,9 @@ jobs:
           STATUS=$(curl -s "https://api.etherscan.io/v2/api?chainid=11155111&module=contract&action=getsourcecode&address=${{ inputs.address }}&apikey=$ETHERSCAN_API_KEY" | python3 -c "import json,sys; d=json.load(sys.stdin); r=d.get('result'); r=r[0] if isinstance(r,list) else r; print(d.get('status'), d.get('message'), '| name=', r.get('ContractName') if isinstance(r,dict) else r, '| srclen=', len(r.get('SourceCode','')) if isinstance(r,dict) else 'n/a')")
           echo "::notice::CONTRACT: ${STATUS:0:300}"
 
+      - name: Compile with force
+        run: npx hardhat compile --force --verbose
+
       - name: Verify on Etherscan (Sepolia)
         env:
           ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
@@ -52,7 +55,7 @@ jobs:
         run: |
           if [ -f verify-log.txt ]; then
             echo "::notice::TOTAL LOG LINES: $(wc -l < verify-log.txt)"
-            grep -inE "error|exception|invalid|missing|mismatch|failed|cannot|unable" verify-log.txt | head -n 25 | while IFS= read -r line; do
+            nl -ba verify-log.txt | head -n 40 | while IFS= read -r line; do
               echo "::error::${line:0:350}"
             done
           else
