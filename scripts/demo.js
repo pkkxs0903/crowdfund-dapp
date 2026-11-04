@@ -20,7 +20,9 @@ require("dotenv").config();
 function parseArgs() {
   const raw = process.argv.slice(2);
   const address =
-    raw.find((a) => /^0x[0-9a-fA-F]{40}$/.test(a)) || process.env.CONTRACT_ADDRESS;
+    raw.find((a) => /^0x[0-9a-fA-F]{40}$/.test(a)) ||
+    process.env.CONTRACT_ADDRESS ||
+    "0x306d64A7F18A0886a5B935931febDAB23D430480"; // deployed on Sepolia
   const targetEth =
     raw.find((a) => /^\d*\.?\d+$/.test(a)) || process.env.DEMO_TARGET || "0.1";
   return { address, targetEth };

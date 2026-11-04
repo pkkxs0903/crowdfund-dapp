@@ -93,10 +93,11 @@ script, so MetaMask is optional for testing the deployed instance:
 
 ```bash
 # create a campaign and invest into it on Sepolia (0.1 ETH target by default)
-# bash / Git Bash:
-CONTRACT_ADDRESS=0x306d64A7F18A0886a5B935931febDAB23D430480 npx hardhat run scripts/demo.js --network sepolia
-# PowerShell:
-#   $env:CONTRACT_ADDRESS = "0x306d64A7F18A0886a5B935931febDAB23D430480"; npm run demo
+# the deployed contract address is the script's built-in default, so on any
+# machine with a .env containing PRIVATE_KEY this single command works:
+npm run demo
+# to override, pass another address or set CONTRACT_ADDRESS:
+#   CONTRACT_ADDRESS=0x... npx hardhat run scripts/demo.js --network sepolia
 ```
 
 The script prints the Etherscan link of every transaction it sends, plus the
