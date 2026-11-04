@@ -54,10 +54,10 @@ jobs:
         if: failure()
         run: |
           if [ -f verify-log.txt ]; then
-            echo "::notice::TOTAL LOG LINES: $(wc -l < verify-log.txt)"
-            nl -ba verify-log.txt | head -n 40 | while IFS= read -r line; do
-              echo "::error::${line:0:350}"
-            done
+            # pack lines with %0A so each annotation can hold many lines
+            echo "::error::LOG-A: $(sed -n '1,8p' verify-log.txt | sed ':a;N;$!ba;s/\n/%0A/g' | cut -c1-1500)"
+            echo "::error::LOG-B: $(sed -n '9,16p' verify-log.txt | sed ':a;N;$!ba;s/\n/%0A/g' | cut -c1-1500)"
+            echo "::error::LOG-C: $(sed -n '17,30p' verify-log.txt | sed ':a;N;$!ba;s/\n/%0A/g' | cut -c1-1500)"
           else
             echo "::error::verify-log.txt not found (failed before verify step)."
           fi
