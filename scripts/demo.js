@@ -2,7 +2,8 @@
  * demo.js — drive the deployed contract on Sepolia WITHOUT any browser wallet.
  *
  * Usage:
- *   node scripts/demo.js <contractAddress> [targetEth]
+ *   CONTRACT_ADDRESS=0x... npx hardhat run scripts/demo.js --network sepolia
+ *   (optional: DEMO_TARGET=0.5 to change the campaign target)
  *
  * What it does:
  *   1. creates a campaign whose target is `targetEth` (default 0.1 ETH)
@@ -14,6 +15,16 @@
  * 30-day constant. Use scripts/local-demo.js for the settlement / refund path.
  */
 const hre = require("hardhat");
+require("dotenv").config();
+
+function parseArgs() {
+  const raw = process.argv.slice(2);
+  const address =
+    raw.find((a) => /^0x[0-9a-fA-F]{40}$/.test(a)) || process.env.CONTRACT_ADDRESS;
+  const targetEth =
+    raw.find((a) => /^\d*\.?\d+$/.test(a)) || process.env.DEMO_TARGET || "0.1";
+  return { address, targetEth };
+}
 
 function link(hash) {
   const base =
@@ -24,11 +35,10 @@ function link(hash) {
 }
 
 async function main() {
-  const address = process.argv[2] || process.env.CONTRACT_ADDRESS;
+  const { address, targetEth } = parseArgs();
   if (!address || !hre.ethers.isAddress(address)) {
-    throw new Error("usage: node scripts/demo.js <contractAddress> [targetEth]");
+    throw new Error("set CONTRACT_ADDRESS=0x... (or pass the address as an argument)");
   }
-  const targetEth = process.argv[3] || "0.1";
 
   const [deployer] = await hre.ethers.getSigners();
   const app = await hre.ethers.getContractAt("CrowdfundingPlatform", address);

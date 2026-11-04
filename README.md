@@ -76,11 +76,15 @@ npx hardhat verify --network sepolia <CONTRACT_ADDRESS> <FEE_RECIPIENT>
 | Item | Value |
 | --- | --- |
 | Network | Sepolia (chain id 11155111) |
-| Contract address | `0x__________________________________________` |
-| Etherscan (verified) | https://sepolia.etherscan.io/address/0x__________________________________________#code |
-| Deployment tx | `0x__________________________________________` |
+| Contract address | `0x306d64A7F18A0886a5B935931febDAB23D430480` |
+| Deployment tx | `0x0d72754d963d05a22e8981518e58447f4ce63f8deddf0adbe84dca14948b743b` (block 12063703, 7 647 931 gas) |
+| Deployer / fee recipient | `0x429069184CC214B8B255F74327807660bccADe99` |
+| First campaign | id 1, target 0.1 ETH, raised 0.05 ETH — see `docs/demo-output.txt` |
+| Etherscan (verified) | https://sepolia.etherscan.io/address/0x306d64A7F18A0886a5B935931febDAB23D430480#code |
 
-> Replace the three placeholders above after running `npm run deploy:sepolia`.
+> Source-code verification on Etherscan is run through GitHub Actions
+> (`.github/workflows/verify.yml`) because the development network used for
+> this project cannot reach `api.etherscan.io` directly.
 
 ### 3.4 Exercising the contract (no browser wallet required)
 
@@ -89,7 +93,10 @@ script, so MetaMask is optional for testing the deployed instance:
 
 ```bash
 # create a campaign and invest into it on Sepolia (0.1 ETH target by default)
-node scripts/demo.js <CONTRACT_ADDRESS> 0.1
+# bash / Git Bash:
+CONTRACT_ADDRESS=0x306d64A7F18A0886a5B935931febDAB23D430480 npx hardhat run scripts/demo.js --network sepolia
+# PowerShell:
+#   $env:CONTRACT_ADDRESS = "0x306d64A7F18A0886a5B935931febDAB23D430480"; npm run demo
 ```
 
 The script prints the Etherscan link of every transaction it sends, plus the

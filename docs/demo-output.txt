@@ -1,0 +1,23 @@
+Live interaction with the deployed contract on Sepolia
+(scripts/demo.js, run 2026-11-04)
+
+network   : sepolia
+contract  : 0x306d64A7F18A0886a5B935931febDAB23D430480
+creator   : 0x429069184CC214B8B255F74327807660bccADe99
+
+[1] createProject (target 0.1 ETH)
+    id   : 1
+    tx   : https://sepolia.etherscan.io/tx/0x6d82403783cdec311381fd7e1324acee27aed490e4f584d79a98f7d7b5237240
+    gas  : 685411
+
+[2] second investor (generated wallet 0x4B0CCeB3F94091f6A8cC37427d6246a123706cF5)
+    funded : 0.055 ETH  tx: https://sepolia.etherscan.io/tx/0x779df319a5dcbe2907f2567df29a7e4d1ef3b51f82b09c73eb20f585ea76dddd
+    invest : 0.05  ETH  tx: https://sepolia.etherscan.io/tx/0x30581f654acfc81b0600f642cf68d4e60e8109aeb879c56f37cf6a503b7c6cb3
+    gas    : 253278
+
+[3] on-chain state read back from the contract
+    target   : 0.1 ETH
+    raised   : 0.05 ETH
+    progress : 50 %
+    deadline : 2026-12-04T17:00:12Z
+    settled  : false
