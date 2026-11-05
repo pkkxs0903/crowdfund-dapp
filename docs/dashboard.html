@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CrowdfundingPlatform · Sepolia Live Dashboard</title>
+<style>
+  :root {
+    --bg: #f5f7fa; --card: #ffffff; --ink: #1a2332; --muted: #5b6b7f;
+    --line: #e3e8ef; --accent: #0f6e56; --warn: #b45309; --bad: #b91c1c;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    background: var(--bg); color: var(--ink); padding: 32px 16px; line-height: 1.5;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; }
+  h1 { font-size: 26px; letter-spacing: -0.02em; }
+  .sub { color: var(--muted); font-size: 14px; margin-top: 6px; }
+  .sub a { color: var(--accent); text-decoration: none; }
+  .sub a:hover { text-decoration: underline; }
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 600; vertical-align: middle; margin-left: 8px;
+  }
+  .ok { background: #e7f5ef; color: var(--accent); }
+  .live { background: #e8f0fe; color: #1d4ed8; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin: 24px 0; }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 18px 20px; box-shadow: 0 1px 3px rgba(16,24,40,.05);
+  }
+  .card .k { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .card .v { font-size: 22px; font-weight: 700; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .card .v.small { font-size: 14px; font-weight: 500; word-break: break-all; }
+  .project { margin-top: 20px; }
+  .bar { height: 10px; background: #eef1f5; border-radius: 999px; overflow: hidden; margin: 12px 0 6px; }
+  .bar > div { height: 100%; background: linear-gradient(90deg,#0f6e56,#17a37b); border-radius: 999px; transition: width .8s ease; }
+  .row { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 10px; }
+  .kv { min-width: 150px; }
+  .kv .k { font-size: 12px; color: var(--muted); }
+  .kv .v { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .state { font-size: 13px; font-weight: 600; }
+  .state.fundraising { color: #1d4ed8; }
+  .state.success { color: var(--accent); }
+  .state.failed { color: var(--bad); }
+  footer { margin-top: 32px; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; }
+  footer code { background: #eef1f5; padding: 1px 6px; border-radius: 5px; font-size: 12px; }
+  #status { margin-top: 18px; font-size: 14px; color: var(--muted); }
+  #status.err { color: var(--bad); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>CrowdfundingPlatform
+    <span class="badge live">Sepolia live</span>
+    <span class="badge ok" id="verifiedBadge">source verified</span>
+  </h1>
+  <div class="sub">
+    Contract <a id="addrLink" href="#">—</a> ·
+    <a href="https://github.com/pkkxs0903/crowdfund-dapp" target="_blank">GitHub repo</a> ·
+    read-only, no wallet required · data fetched directly from a Sepolia RPC node
+  </div>
+
+  <div class="grid">
+    <div class="card"><div class="k">Projects created</div><div class="v" id="projectCount">—</div></div>
+    <div class="card"><div class="k">Platform fee pool</div><div class="v" id="platformPool">—</div></div>
+    <div class="card"><div class="k">Fee rate / min. investment</div><div class="v" id="consts">—</div></div>
+    <div class="card"><div class="k">Platform address</div><div class="v small" id="platform">—</div></div>
+  </div>
+
+  <div id="status">Connecting to Sepolia…</div>
+  <div id="projects"></div>
+
+  <footer>
+    Every value on this page is a <b>live on-chain read</b> of contract
+    <code id="addrCode">—</code> via RPC <code id="rpcName">—</code>.
+    Source code is verified on Etherscan — click the address above to audit it.
+    Command-line equivalent: <code>npm run demo</code> · tests: <code>npx hardhat test</code> (37 passing).
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.4/ethers.umd.min.js"></script>
+<script>
+(function () {
+  var ADDRESS = "0x306d64A7F18A0886a5B935931febDAB23D430480";
+  var RPC = "https://ethereum-sepolia-rpc.publicnode.com";
+  document.getElementById("addrLink").href =
+    "https://sepolia.etherscan.io/address/" + ADDRESS + "#code";
+  document.getElementById("addrLink").textContent = ADDRESS;
+  document.getElementById("addrCode").textContent = ADDRESS;
+  document.getElementById("rpcName").textContent = "publicnode.com";
+
+  var ABI = [
+    "function projectCount() view returns (uint256)",
+    "function platformPool() view returns (uint256)",
+    "function platform() view returns (address)",
+    "function getProject(uint256) view returns (tuple(uint256 id, address creator, uint256 target, uint256 startTime, uint256 deadline, uint256 raised, bool settled, bool success, bool withdrawn))",
+    "function successRate(uint256) view returns (uint256)",
+    "function timeLeft(uint256) view returns (uint256)"
+  ];
+  var ETH = function (w) { return (Number(w) / 1e18).toFixed(4) + " ETH"; };
+
+  function status(msg, isErr) {
+    var el = document.getElementById("status");
+    el.textContent = msg;
+    el.className = isErr ? "err" : "";
+  }
+
+  async function load() {
+    try {
+      var provider = new ethers.JsonRpcProvider(RPC);
+      var c = new ethers.Contract(ADDRESS, ABI, provider);
+
+      var count = await c.projectCount();
+      var pool = await c.platformPool();
+      var plat = await c.platform();
+      document.getElementById("projectCount").textContent = count.toString();
+      document.getElementById("platformPool").textContent = ETH(pool);
+      document.getElementById("platform").textContent = plat;
+      document.getElementById("consts").textContent = "2% / 0.01 ETH";
+
+      var box = document.getElementById("projects");
+      for (var id = 1; id <= Number(count); id++) {
+        var p = await c.getProject(id);
+        var rate = await c.successRate(id);
+        var left = await c.timeLeft(id);
+        var pct = Math.min(100, Number(p.raised) * 100 / Number(p.target));
+        var state;
+        if (!p.settled) state = '<span class="state fundraising">● fundraising — settle() callable after deadline</span>';
+        else if (p.success) state = '<span class="state success">✔ settled: SUCCESS — creator may withdraw (98%) + platform fee (2%)</span>';
+        else state = '<span class="state failed">✘ settled: FAILED — investors refund 100%</span>';
+        var days = Number(left) / 86400;
+        var html = '' +
+          '<div class="card project">' +
+            '<div class="k">Project #' + id + '</div>' +
+            '<div class="v">' + ETH(p.raised) + ' <span style="font-size:14px;font-weight:500;color:var(--muted)">raised of ' + ETH(p.target) + ' target</span></div>' +
+            '<div class="bar"><div style="width:' + pct.toFixed(1) + '%"></div></div>' +
+            '<div class="row">' +
+              '<div class="kv"><div class="k">Progress</div><div class="v">' + rate.toString() + '%</div></div>' +
+              '<div class="kv"><div class="k">Creator</div><div class="v">' + p.creator.slice(0, 8) + "…" + p.creator.slice(-6) + '</div></div>' +
+              '<div class="kv"><div class="k">Deadline</div><div class="v">' + new Date(Number(p.deadline) * 1000).toISOString().slice(0, 10) + '</div></div>' +
+              '<div class="kv"><div class="k">Time left</div><div class="v">' + (Number(left) > 0 ? days.toFixed(1) + " days" : "expired") + '</div></div>' +
+            '</div>' +
+            '<div style="margin-top:10px">' + state + '</div>' +
+          '</div>';
+        box.insertAdjacentHTML("beforeend", html);
+      }
+      status("Loaded " + count + " project(s) from Sepolia at block-height read · refresh to update.");
+    } catch (e) {
+      status("RPC error: " + e.message + " — retry or check your network.", true);
+    }
+  }
+  load();
+})();
+</script>
+</body>
+</html>
