@@ -42,7 +42,7 @@ def fig1():
     ax.axis("off")
 
     ax.text(0.15, 6.35, "Off-chain", fontsize=8.5, color=MID, style="italic")
-    box(ax, 0.15, 5.25, 2.9, 0.95, "Browser UI", "React · ethers.js v6 · read-only calls")
+    box(ax, 0.15, 5.25, 2.9, 0.95, "Browser UI (optional)", "React · ethers.js v6 · not in this delivery")
     box(ax, 3.35, 5.25, 2.5, 0.95, "MetaMask", "key custody · tx signing")
     box(ax, 6.15, 5.25, 3.7, 0.95, "Project metadata", "title · description · images (off-chain)")
 
